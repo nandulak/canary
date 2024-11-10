@@ -1,53 +1,62 @@
 # Deployment Information
 pods_status:
-  main_pods_running: #TODO: Enter number of main pods running
-  canary_pods_running: #TODO: Enter number of canary pods running
+  main_pods_running: 3
+  canary_pods_running: 1
 
 # Service Information
 service_endpoints:
-  main_service_cluster_ip: #TODO: Enter the ClusterIP of main service
-  canary_service_cluster_ip: #TODO: Enter the ClusterIP of canary service
+  main_service_cluster_ip: 10.106.154.164
+  canary_service_cluster_ip: 10.106.80.155
 
 # Ingress Information
 ingress_details:
-  address: #TODO: Enter the Ingress controller IP address
-  host: #TODO: Enter the configured host (should be canary-demo.local)
+  address: 192.168.49.2
+  host: canary-demo.local
 
 # Metrics
 main_deployment_metrics:
-  http_requests_total: #TODO: Enter the value from main deployment's /metrics endpoint
-  process_cpu_seconds_total: #TODO: Enter the CPU seconds from main deployment
-  process_resident_memory_bytes: #TODO: Enter the memory usage from main deployment
+  http_requests_total: 1.0
+  process_cpu_seconds_total: 0.2
+  process_resident_memory_bytes: 3.0502912e+07
 
 canary_deployment_metrics:
-  http_requests_total: #TODO: Enter the value from canary deployment's /metrics endpoint
-  process_cpu_seconds_total: #TODO: Enter the CPU seconds from canary deployment
-  process_resident_memory_bytes: #TODO: Enter the memory usage from canary deployment
+  http_requests_total: 1.0
+  process_cpu_seconds_total: 0.23
+  process_resident_memory_bytes: 3.028992e+07
 
 # Traffic Distribution Test
 traffic_test_results:
-  total_requests_sent: #TODO: Enter how many test requests you sent (should be 20)
-  main_responses_received: #TODO: Enter how many responses were from main deployment
-  canary_responses_received: #TODO: Enter how many responses were from canary deployment
-  actual_canary_percentage: #TODO: Calculate the actual percentage of canary traffic
+  total_requests_sent: 20
+  main_responses_received: 19
+  canary_responses_received: 1
+  actual_canary_percentage: 5
 
 # Prometheus Queries
 prometheus_metrics:
-  main_request_rate: #TODO: Enter the result of rate(http_requests_total{version="v1"}[5m])
-  canary_request_rate: #TODO: Enter the result of rate(http_requests_total{version="v2"}[5m])
+  main_request_rate: 0.02734365277777778
+  canary_request_rate: 0.008504000000000001
 
 # Rollback Test
 rollback_test:
-  previous_revision: #TODO: Enter the revision number before rollback
-  rollback_command_used: #TODO: Enter the helm rollback command you used
-  time_to_rollback_seconds: #TODO: Enter how long the rollback took to complete
+  previous_revision: 1
+  rollback_command_used: time helm rollback canary-demo 1 -n canary-demo
+  time_to_rollback_seconds: 0m0.264s
 
 # Error Budget Calculation (based on 99.9% SLO)
 error_budget:
-  monthly_error_budget_seconds: #TODO: Calculate and enter the monthly error budget in seconds
-  remaining_error_budget_percentage: #TODO: Enter current remaining error budget percentage
+  monthly_error_budget_seconds: 2592.00
+  remaining_error_budget_percentage: 100.00
 
 # Additional Observations
 observations:
-  unexpected_behaviors: #TODO: List any unexpected behaviors you observed
-  suggested_improvements: #TODO: List any improvements you would suggest
+  unexpected_behaviors:
+    - Despite deploying multiple versions of the application and performing a rollback, we maintained 100% of our error budget.
+    - Initially, Prometheus did not scrape application metrics because the necessary 'release: prometheus' labels were missing in the Helm chart templates. This required manual updates to the templates to resolve.
+    - After upgrading the canary deployment to version v3, the container failed to start. This resulted in port-forwarding errors and the pod not running, indicating issues with the 'v3' image.
+  suggested_improvements:
+    - Since we have 100% of our error budget remaining, we can consider more aggressive testing strategies, such as increasing the canary traffic percentage or deploying changes more frequently, to accelerate feature delivery while staying within our reliability targets.
+    - Update the Helm chart templates to include the 'release: prometheus' label by default. This ensures seamless integration with Prometheus and reduces manual configuration.
+    - Before deploying new images like `v3`, perform comprehensive testing to ensure they function correctly. This can prevent runtime errors and deployment issues.
+    - Add health checks to the Kubernetes deployment specifications. This allows Kubernetes to automatically detect and recover from pod failures, enhancing system reliability.
+    - Improve the application's error handling and logging mechanisms to provide clearer diagnostic information. This simplifies troubleshooting and reduces downtime.
+    - Set up alerts for failed pods or missing metrics to enable rapid response to issues, helping to maintain a high availability and a full error budget.
